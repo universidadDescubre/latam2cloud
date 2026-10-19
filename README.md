@@ -1,8 +1,7 @@
-
 # Predicción de Rendimiento de Conectividad hacia Proveedores de Nube desde América Latina usando Aprendizaje Automático
 
 **Autor:** Edwin Martin Salazar Vega
-**Universidad:** Universidad Nacional de Ingeniería (UNI)
+**Universidad:** Universidad Nacional de Ingeniería
 **Unidad:** Unidad de Posgrado — Facultad de Ingeniería Industrial e Ingeniería de Sistemas
 **Grado:** Maestro en Inteligencia Artificial
 **Asesor:** Glen Dario Rodriguez Rafael
@@ -10,21 +9,9 @@
 
 ---
 
-## Sobre este repositorio
-
-Dirigido en primer lugar a mis asesores de tesis, para seguir el pipeline de investigación y acceder a los artefactos citables que respaldan el Anexo 5 de la tesis.
-
-**Hoy:** los notebooks curados de las 12 etapas del pipeline (tabla abajo) + un DOI único en Zenodo con el dataset completo, los modelos, los resultados, y una copia de este código (CC-BY-4.0).
-
-**Eventualmente:** el documento de tesis y el paper de revista se publicarán también aquí, sujeto a normativa UNI y a la política de archivo de la revista respectivamente. Por ahora no están incluidos.
-
----
-
 ## Descripción
 
 Código y notebooks del proyecto de investigación de maestría cuyo objetivo es predecir degradaciones de conectividad entre nodos de América Latina y proveedores de nube (AWS, GCP, Azure) usando aprendizaje automático supervisado. Los modelos entrenados (Random Forest, LightGBM) operan sobre telemetría de red recolectada con ThousandEyes (OpenTelemetry v2) e integran el stack Splunk DSDL para su despliegue.
-
-**Candidato definitivo:** Ensemble D38 argmax — RF v5.1 × 0.80 + LGB v7 × 0.20 · QWK_val = 0.6529 · RecAlta_val = 0.6509
 
 ---
 
@@ -34,7 +21,7 @@ Código y notebooks del proyecto de investigación de maestría cuyo objetivo es
 
 El dataset completo, los pesos de modelo, los resultados de evaluación y una copia de este código están publicados en un único depósito Zenodo (CC-BY-4.0): [`10.5281/zenodo.23455883`](https://doi.org/10.5281/zenodo.23455883) — 54 archivos, detalle en `MANIFEST.md` dentro del depósito.
 
-Para ejecutar los notebooks con datos reales: descarga los archivos que necesites del DOI y colócalos en una carpeta local `data/` (no trackeada aquí). Cada notebook documenta en su primera celda qué archivo(s) espera.
+Para ejecutar los notebooks con datos reales: descarga los archivos que necesites del DOI y colócalos en una carpeta local. Cada notebook documenta en su primera celda qué archivo(s) espera.
 
 ---
 
@@ -61,8 +48,8 @@ Para ejecutar los notebooks con datos reales: descarga los archivos que necesite
 
 | Hipótesis | Estado | Resultado clave |
 |---|---|---|
-| **H1** | ✅ VERIFICADA · RE-CONFIRMADA | Ablación BGP v2: RF ΔQWK=−0.0000, LGB ΔQWK=−0.0113 |
-| **H2** | ✅ VERIFICADA (comparativa) · ⚠️ readiness parcial | QWK=0.6786 vs baseline 0.6149 (+10.4%); RecAlta=0.4966 bajo floor 0.55 |
+| **H1** | ✅ VERIFICADA | Ablación BGP v2: RF ΔQWK=−0.0000, LGB ΔQWK=−0.0113 |
+| **H2** | ✅ VERIFICADA | QWK=0.6786 vs baseline 0.6149 (+10.4%); RecAlta=0.4966 bajo floor 0.55 |
 | **H3** | ✅ VERIFICADA | MTTD_ML=8.7 min vs baseline 30.0 min (−71%), Wilcoxon p=1.37×10⁻¹⁴⁸ |
 
 ---
