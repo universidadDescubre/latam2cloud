@@ -17,9 +17,9 @@ Código y notebooks del proyecto de investigación de maestría cuyo objetivo es
 
 ## Datos y Artefactos
 
-[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.23455883.svg)](https://doi.org/10.5281/zenodo.23455883)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.23463635.svg)](https://doi.org/10.5281/zenodo.23463635)
 
-El dataset completo, los pesos de modelo, los resultados de evaluación y una copia de este código están publicados en un único depósito Zenodo (CC-BY-4.0): [`10.5281/zenodo.23455883`](https://doi.org/10.5281/zenodo.23455883) — 54 archivos, detalle en `MANIFEST.md` dentro del depósito.
+El dataset completo, los pesos de modelo, los resultados de evaluación y una copia de este código están publicados en un único depósito Zenodo (CC-BY-4.0): [`10.5281/zenodo.23463635`](https://doi.org/10.5281/zenodo.23463635) — 55 archivos (incluye MANIFEST.md), detalle en `MANIFEST.md` dentro del depósito.
 
 Para ejecutar los notebooks con datos reales: descarga los archivos que necesites del DOI y colócalos en una carpeta local. Cada notebook documenta en su primera celda qué archivo(s) espera.
 
@@ -60,7 +60,7 @@ Para ejecutar los notebooks con datos reales: descarga los archivos que necesite
 Salazar Vega, E. M. (2026). Predicción de Rendimiento de Conectividad hacia
 Proveedores de Nube desde América Latina usando Aprendizaje Automático
 (Dataset, modelos y código) [Data set]. Zenodo.
-https://doi.org/10.5281/zenodo.23455883
+https://doi.org/10.5281/zenodo.23463635
 ```
 
 Metadatos también disponibles en `CITATION.cff`.
