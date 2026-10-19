@@ -1,24 +1,22 @@
-# ⚠️ BORRADOR — pendiente de completar con las versiones exactas usadas en DSDL/JupyterLab
-# (Splunk AI Toolkit v5.7.4). Edwin: confirmar versiones reales desde el entorno del pod
-# antes de copiar al repo curado — esto es un placeholder de estructura, no las versiones reales.
-name: latam2cloud-pipeline
+name: latam2cloud
 channels:
   - conda-forge
 dependencies:
-  - python=3.10
-  - pandas
-  - numpy
-  - scikit-learn
-  - lightgbm
-  - xgboost
-  - duckdb
+  - python=3.11
+  - numpy=1.26.4
+  - pandas=3.0.3
   - pyarrow
-  - onnx
-  - onnxruntime
-  - skl2onnx
-  - onnxmltools
-  - mlflow
+  - scikit-learn=1.9.1
+  - lightgbm=4.7.0
+  - xgboost=3.2.0
+  - tensorflow=2.19.1
+  - duckdb
+  - scipy
   - matplotlib
+  - joblib
+  - imbalanced-learn
+  - onnx=1.23.2
+  - onnxruntime=1.31.0
+  - onnxmltools=1.16.0
+  - mlflow
   - pip
-  - pip:
-      - splunk-sdk
