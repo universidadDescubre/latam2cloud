@@ -3,7 +3,7 @@
 # No hay integración GitHub→Zenodo (un solo DOI, decisión 2026-10-19):
 # este repo no tiene DOI propio, se cita por URL + tag/commit. El código
 # se incluye también, como copia, dentro del depósito Zenodo único
-# (DOI publicado: 10.5281/zenodo.23463635).
+# (concept DOI, siempre última versión: 10.5281/zenodo.23455882).
 cff-version: 1.2.0
 message: "Si usa este código, los notebooks o los resultados de este repositorio, cítelo usando los metadatos de este archivo."
 type: software
@@ -17,8 +17,8 @@ authors:
 repository-code: "https://github.com/universidadDescubre/latam2cloud"
 identifiers:
   - type: doi
-    value: "10.5281/zenodo.23463635"
-    description: "Depósito Zenodo con el dataset, los modelos entrenados, los resultados y una copia congelada de este código (CC-BY-4.0)."
+    value: "10.5281/zenodo.23455882"
+    description: "Concept DOI (siempre última versión) del depósito Zenodo con el dataset, los modelos entrenados, los resultados y una copia congelada de este código (CC-BY-4.0)."
 license: MIT
 abstract: >-
   Código y notebooks del pipeline de ingesta, etiquetado, modelado y
