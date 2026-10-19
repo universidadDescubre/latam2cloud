@@ -1,0 +1,325 @@
+<form version="1.1" autoRun="true" refresh="300">
+  <label>latam2cloud — Predicción en Tiempo Real</label>
+  <description>Predicción de Rendimiento de Conectividad hacia Proveedores de Nube desde América Latina usando Aprendizaje Automático</description>
+
+  <!-- ──────────────────────────────────────────────────────────────────
+       Filtros: Cloud Provider, País, Agente (dropdown populatingSearch),
+       Período histórico ($time_hist$).
+       $cloud$: filtro en índice (base_scoring y base_preds).
+       $pais$ y $agente_filter$: post-procesamiento al final de
+       base_scoring y base_preds (sobre campo Agente renombrado).
+       $time_hist$: solo aplica a base_preds (ROW 3+4); base_scoring
+       siempre usa ventana fija -30m (Plan §IV.4, 6 muestras × 5 min).
+  ────────────────────────────────────────────────────────────────────── -->
+  <fieldset submitButton="false" autoRun="true">
+    <input type="dropdown" token="cloud" searchWhenChanged="true">
+      <label>Cloud Provider</label>
+      <choice value="*">Todos</choice>
+      <choice value="AWS">AWS</choice>
+      <choice value="GCP">GCP</choice>
+      <choice value="Azure">Azure</choice>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="pais" searchWhenChanged="true">
+      <label>País</label>
+      <choice value="*">Todos</choice>
+      <choice value="Brazil">Brazil</choice>
+      <choice value="Chile">Chile</choice>
+      <choice value="Colombia">Colombia</choice>
+      <choice value="Peru">Peru</choice>
+      <choice value="Mexico">Mexico</choice>
+      <choice value="Argentina">Argentina</choice>
+      <choice value="Ecuador">Ecuador</choice>
+      <choice value="Panama">Panama</choice>
+      <choice value="Costa Rica">Costa Rica</choice>
+      <choice value="Uruguay">Uruguay</choice>
+      <choice value="Bolivia">Bolivia</choice>
+      <choice value="Venezuela">Venezuela</choice>
+      <choice value="Dominican Republic">Dominican Republic</choice>
+      <choice value="Guatemala">Guatemala</choice>
+      <choice value="Paraguay">Paraguay</choice>
+      <choice value="Trinidad and Tobago">Trinidad and Tobago</choice>
+      <default>Peru</default>
+    </input>
+    <input type="dropdown" token="agente_filter" searchWhenChanged="true">
+      <label>Agente</label>
+      <choice value="*">Todos</choice>
+      <search>
+        <query>
+index=thousandeyes sourcetype="cisco:thousandeyes:metric" earliest=-30m latest=now
+| eval source_agent='thousandeyes.source.agent.name'
+| where isnotnull(source_agent)
+| dedup source_agent
+| sort source_agent
+| table source_agent
+        </query>
+        <earliest>-30m</earliest>
+        <latest>now</latest>
+      </search>
+      <fieldForLabel>source_agent</fieldForLabel>
+      <fieldForValue>source_agent</fieldForValue>
+      <default>*</default>
+    </input>
+    <input type="dropdown" token="time_hist" searchWhenChanged="true">
+      <label>Período histórico</label>
+      <choice value="-1h">Última hora</choice>
+      <choice value="-6h">Últimas 6 horas</choice>
+      <choice value="-24h">Últimas 24 horas</choice>
+      <choice value="-7d">Últimos 7 días</choice>
+      <default>-6h</default>
+    </input>
+  </fieldset>
+
+  <!-- ──────────────────────────────────────────────────────────────────
+       ROW 1 — KPIs en Tiempo Real (Plan §IV.3)
+       Terminología: Alta / Media / Baja / Normal
+       Todos los paneles derivan de base_scoring (filtrado por
+       Cloud, País y Agente). Solo se filtra por Estado aquí.
+  ────────────────────────────────────────────────────────────────────── -->
+  <row>
+    <panel>
+      <single>
+        <title>Degradación Alta</title>
+        <search base="base_scoring">
+          <query>| where Estado="Alta" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Degradación Media</title>
+        <search base="base_scoring">
+          <query>| where Estado="Media" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf98b06"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Degradación Baja</title>
+        <search base="base_scoring">
+          <query>| where Estado="Baja" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Normal</title>
+        <search base="base_scoring">
+          <query>| where Estado="Normal" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0xf8be34","0x53a051"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Total Rutas</title>
+        <search base="base_scoring">
+          <query>| stats count</query>
+        </search>
+      </single>
+    </panel>
+  </row>
+
+  <!-- ──────────────────────────────────────────────────────────────────
+       ROW 2 — Tabla principal: Scoring en Tiempo Real via DSDL
+       base_scoring: index=thousandeyes earliest=-30m → features →
+       | fit MLTKContainer algo=latam2cloud_monitor (Ensemble D38/D40) →
+       Estado=predicted_pred_class (Alta/Media/Baja/Normal · Plan §IV.3)
+       País/Agente en post-proceso al final (sobre campo Agente).
+  ────────────────────────────────────────────────────────────────────── -->
+  <row>
+    <panel>
+      <title>Scoring en Tiempo Real — Ensemble D38/D40 via DSDL (index=thousandeyes · últimos 30 min)</title>
+      <table>
+        <search id="base_scoring">
+          <query>
+index=thousandeyes sourcetype="cisco:thousandeyes:metric" earliest=-30m latest=now
+  cloud_provider=$cloud$
+| eval metric=case(
+    isnotnull('metric_name:network.latency'),        "network.latency",
+    isnotnull('metric_name:network.loss'),           "network.loss",
+    isnotnull('metric_name:network.jitter'),         "network.jitter",
+    isnotnull('metric_name:bgp.path_changes.count'), "bgp.path_changes",
+    isnotnull('metric_name:bgp.reachability'),       "bgp.reachability",
+    true(), "other")
+| eval value=coalesce(
+    'metric_name:network.latency',
+    'metric_name:network.loss',
+    'metric_name:network.jitter',
+    'metric_name:bgp.path_changes.count',
+    'metric_name:bgp.reachability')
+| eval source_agent='thousandeyes.source.agent.name'
+| where metric!="other" AND isnotnull(value) AND isnotnull(source_agent)
+| stats
+    avg(eval(if(metric="network.latency",  value, null()))) as mean_lat,
+    perc95(eval(if(metric="network.latency", value, null()))) as p95_lat,
+    stdev(eval(if(metric="network.latency", value, null()))) as std_lat,
+    avg(eval(if(metric="network.loss",     value, null()))) as mean_loss,
+    avg(eval(if(metric="network.jitter",   value, null()))) as mad_jitter,
+    perc95(eval(if(metric="network.jitter", value, null()))) as p95_jitter
+    by source_agent, cloud_provider, region
+| eval mad_lat=std_lat*0.7979
+| eval y_lag1=0, y_lag2=0, y_lag3=0, streak_length=0
+| eval d_latency=0, d_jitter=0, d_loss=0
+| eval latency_ratio_lag48=1.0, lag48_mean_lat=mean_lat
+| fit MLTKContainer algo=latam2cloud_monitor * into latam2cloud_monitor
+| eval Estado=predicted_pred_class
+| eval _orden=case(Estado="Alta", 1, Estado="Media", 2, Estado="Baja", 3, true(), 4)
+| sort _orden, -predicted_prob_alta
+| fields - _orden
+| table source_agent, cloud_provider, region,
+        mean_lat, p95_lat, mean_loss, mad_jitter,
+        predicted_prob_normal, predicted_prob_baja,
+        predicted_prob_media, predicted_prob_alta, Estado
+| rename source_agent as "Agente", cloud_provider as "Cloud", region as "Región",
+         mean_lat as "Lat Media (ms)", p95_lat as "P95 Lat (ms)",
+         mean_loss as "Loss Media (%)", mad_jitter as "Jitter MAD (ms)",
+         predicted_prob_normal as "P(Normal)",
+         predicted_prob_baja as "P(Baja)",
+         predicted_prob_media as "P(Media)",
+         predicted_prob_alta as "P(Alta)",
+         Estado as "Estado"
+| eval _pais=replace(Agente, "^[^,]+,\s*([^(]+?)\s*\(.*\)$", "\1")
+| where ("$pais$"="*" OR _pais="$pais$")
+  AND ("$agente_filter$"="*" OR Agente="$agente_filter$")
+| fields - _pais
+          </query>
+          <earliest>-30m</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rowNumbers">false</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Estado">
+          <colorPalette type="map">{"Alta":"#dc4e41","Media":"#f98b06","Baja":"#f8be34","Normal":"#53a051"}</colorPalette>
+        </format>
+        <format type="number" field="P(Normal)"><option name="precision">4</option></format>
+        <format type="number" field="P(Baja)"><option name="precision">4</option></format>
+        <format type="number" field="P(Media)"><option name="precision">4</option></format>
+        <format type="number" field="P(Alta)"><option name="precision">4</option></format>
+        <format type="number" field="Lat Media (ms)"><option name="precision">1</option></format>
+        <format type="number" field="P95 Lat (ms)"><option name="precision">1</option></format>
+        <format type="number" field="Loss Media (%)"><option name="precision">3</option></format>
+        <format type="number" field="Jitter MAD (ms)"><option name="precision">2</option></format>
+      </table>
+    </panel>
+  </row>
+
+  <!-- ──────────────────────────────────────────────────────────────────
+       ROW 3 — KPIs Historial: conteo de alertas almacenadas (Plan §IV.3)
+       Fuente: index=latam2cloud_preds — predicciones reales generadas
+       por el Scheduled Search "latam2cloud_preds_writer" cada 5 min.
+       _time = momento exacto de la predicción en tiempo real.
+       Solo muestra Alta/Media/Baja (Estado!="Normal" en base_preds).
+       $time_hist$ controla el período de consulta.
+  ────────────────────────────────────────────────────────────────────── -->
+  <row>
+    <panel>
+      <single>
+        <title>Degradación Alta — Historial</title>
+        <search base="base_preds">
+          <query>| where Estado="Alta" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xdc4e41"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Degradación Media — Historial</title>
+        <search base="base_preds">
+          <query>| where Estado="Media" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf98b06"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+    <panel>
+      <single>
+        <title>Degradación Baja — Historial</title>
+        <search base="base_preds">
+          <query>| where Estado="Baja" | stats count</query>
+        </search>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["0x53a051","0xf8be34"]</option>
+        <option name="rangeValues">[1]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+
+  <!-- ──────────────────────────────────────────────────────────────────
+       ROW 4 — Historial: Gráfico temporal + Tabla raw data de alertas
+       base_preds define la búsqueda base sobre index=latam2cloud_preds.
+       Lee predicciones ya almacenadas — sin llamada al modelo DSDL.
+       Gráfico: timechart de alertas no-Normal por Estado en el tiempo.
+       Tabla: detalle de cada ruta con alerta (quién, cuándo, probabilidades).
+  ────────────────────────────────────────────────────────────────────── -->
+  <row>
+    <panel>
+      <title>Alertas en el Tiempo — predicciones almacenadas (index=latam2cloud_preds)</title>
+      <chart>
+        <search base="base_preds">
+          <query>| timechart count by Estado</query>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.stackMode">stacked</option>
+        <option name="charting.fieldColors">{"Alta":"#dc4e41","Media":"#f98b06","Baja":"#f8be34"}</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.axisTitleY.text">Predicciones de Alerta</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Detalle de Rutas con Alerta — index=latam2cloud_preds · período seleccionado</title>
+      <table>
+        <search id="base_preds">
+          <query>
+index=latam2cloud_preds sourcetype="ml_predictions" earliest=$time_hist$ latest=now
+| rename source_agent as "Agente", cloud_provider as "Cloud", region as "Región",
+         predicted_prob_alta as "P(Alta)", predicted_prob_media as "P(Media)",
+         predicted_prob_baja as "P(Baja)"
+| eval _pais=replace(Agente, "^[^,]+,\s*([^(]+?)\s*\(.*\)$", "\1")
+| where ("$cloud$"="*" OR Cloud="$cloud$")
+  AND ("$pais$"="*" OR _pais="$pais$")
+  AND ("$agente_filter$"="*" OR Agente="$agente_filter$")
+| fields - _pais
+| where Estado!="Normal"
+| sort -_time
+          </query>
+          <earliest>$time_hist$</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="rowNumbers">true</option>
+        <option name="wrap">true</option>
+        <format type="color" field="Estado">
+          <colorPalette type="map">{"Alta":"#dc4e41","Media":"#f98b06","Baja":"#f8be34"}</colorPalette>
+        </format>
+        <format type="number" field="P(Alta)"><option name="precision">4</option></format>
+        <format type="number" field="P(Media)"><option name="precision">4</option></format>
+        <format type="number" field="P(Baja)"><option name="precision">4</option></format>
+      </table>
+    </panel>
+  </row>
+
+</form>

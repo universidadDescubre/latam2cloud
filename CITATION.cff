@@ -1,0 +1,38 @@
+# CITATION.cff — https://citation-file-format.github.io/
+# Leído nativamente por el botón "Cite this repository" de GitHub.
+# No hay integración GitHub→Zenodo (un solo DOI, decisión 2026-10-19):
+# este repo no tiene DOI propio, se cita por URL + tag/commit. El código
+# se incluye también, como copia, dentro del depósito Zenodo único
+# (DOI publicado: 10.5281/zenodo.23455883).
+cff-version: 1.2.0
+message: "Si usa este código, los notebooks o los resultados de este repositorio, cítelo usando los metadatos de este archivo."
+type: software
+title: "Predicción de Rendimiento de Conectividad hacia Proveedores de Nube desde América Latina usando Aprendizaje Automático"
+version: "1.0.0"
+date-released: "2026-10-19"
+authors:
+  - family-names: "Salazar Vega"
+    given-names: "Edwin Martin"
+    affiliation: "Universidad Nacional de Ingeniería (UNI)"
+repository-code: "https://github.com/universidadDescubre/latam2cloud"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.23455883"
+    description: "Depósito Zenodo con el dataset, los modelos entrenados, los resultados y una copia congelada de este código (CC-BY-4.0)."
+license: MIT
+abstract: >-
+  Código y notebooks del pipeline de ingesta, etiquetado, modelado y
+  despliegue de la tesis de Maestría en Inteligencia Artificial (UNI) sobre
+  predicción de degradaciones de conectividad entre nodos de América Latina
+  y proveedores de nube pública (AWS, GCP, Azure) usando telemetría
+  ThousandEyes (OpenTelemetry v2) y el stack Splunk DSDL. El dataset
+  completo, los artefactos de modelo y una copia de este código se
+  publican también en un único depósito Zenodo (CC-BY-4.0).
+keywords:
+  - network telemetry
+  - machine learning
+  - cloud connectivity
+  - ThousandEyes
+  - BGP
+  - Splunk DSDL
+  - ordinal classification
