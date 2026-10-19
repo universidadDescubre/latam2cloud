@@ -58,47 +58,34 @@ Este depósito incluye además una copia congelada del código curado (28 notebo
 
 ### Pipeline de notebooks
 
-Recorrido progresivo de los 28 notebooks, en el orden en que se ejecutan. El detalle celda por celda de cada uno vive en su documento de referencia (`DSDL_DATASET_ANALYSIS.md`, `CALIBRATION_ANALYSIS.md`, `LABELING_ANALYSIS.md`, `FEATURE_ENGINEERING_ANALYSIS.md`, `MODELING_ANALYSIS.md`, `DECISION_LOG.md`, `TEST_SET_EVALUATION.md`, `ABLATION_BGP_ANALYSIS.md`, `MLOPS_PIPELINE.md`, `DSDL_APPLY_PROTOTYPE.md`), citado en cada entrada.
+Los 28 notebooks, en el orden en que se ejecutan. El detalle celda por celda de cada uno vive en su documento de referencia (`DSDL_DATASET_ANALYSIS.md`, `CALIBRATION_ANALYSIS.md`, `LABELING_ANALYSIS.md`, `FEATURE_ENGINEERING_ANALYSIS.md`, `MODELING_ANALYSIS.md`, `DECISION_LOG.md`, `TEST_SET_EVALUATION.md`, `ABLATION_BGP_ANALYSIS.md`, `MLOPS_PIPELINE.md`, `DSDL_APPLY_PROTOTYPE.md`).
 
-**Etapa 0 · Ingesta** — `00 search load 01.ipynb` / `00 search load 52.ipynb`: 2 de 52 notebooks de ingesta incluidos como muestra representativa (primero y último, mismo patrón repetido por semana/proveedor contra el índice `thousandeyes` de Splunk). Outcome conjunto de los 52: 72 parquets crudos, 525,019,966 filas (`DSDL_DATASET_ANALYSIS.md`).
-
-**Etapa 1 · EDA** — `01 dataset analisis v10.ipynb`: consolida los 72 parquets y ejecuta el análisis exploratorio final. Outcome: `te_all_raw_v4.parquet` — 525M filas, 162 días, 621 rutas, ratio BGP 1:45 (`DSDL_DATASET_ANALYSIS.md`).
-
-**Etapa 2 · Calibración** — `02 calibracion v7.ipynb`: barrido y validación de umbrales de severidad sobre las 1,035 rutas completas. Outcome: parámetros congelados BD=7, k=(1.0, 2.0, 3.5), OR≥4/6 — no se re-ejecuta (`CALIBRATION_ANALYSIS.md`).
-
-**Etapa 3 · Etiquetado**
-- `03 etiquetado v3.ipynb` — primera ejecución, dataset de 83 días (may–jul 2026), mismos parámetros que v4 pero incompleto. Outcome: histórico, superado por v4 (`DECISION_LOG.md`).
-- `03 etiquetado v4.ipynb` — versión final sobre los 162 días completos. Outcome: 7,628,801 ventanas etiquetadas, 1,035 rutas, splits 70/15/15, cobertura test 99.6% (`LABELING_ANALYSIS.md`).
-
-**Etapa 4 · Feature Engineering**
-- `04 feature_engineering v4.ipynb` — primera iteración, 83 días. Outcome: 119→113 features tras corrección D12-REV; superada por v5/v6.
-- `04 feature_engineering v5.ipynb` — segunda iteración, 83 días. Outcome: 100 features, arquitectura de referencia (la misma que v6).
-- `04 feature_engineering v6.ipynb` — versión final, 162 días completos. Outcome: `te_features_v6.parquet` — 100 features ML, 7,628,801 ventanas, train=5,349,594/val=1,140,847/test=1,138,360 (`FEATURE_ENGINEERING_ANALYSIS.md §12`).
-
-**Etapa 5 · Modelado** — búsqueda del candidato final, campaña v4→v15 (`MODELING_ANALYSIS.md`):
-- `05 modelado v4.ipynb` — primera campaña (RF, XGBoost, GRU) sobre FE v4. Outcome: RF v4 Full QWK=0.6257, XGBoost v4 QWK=0.6142, GRU (QWK Loss) QWK=0.4996 con colapso de la clase Alta — ninguno alcanza el floor QWK≥0.65 (§1.1).
-- `05 modelado v5.ipynb` — incorpora LightGBM y el primer ensemble (D27), sobre FE v5. Outcome: primer ensemble multi-modelo, base para las iteraciones siguientes (§1.2).
-- `05 modelado v7.ipynb` — LightGBM v7, versión final del componente LGB. Outcome: modelo candidato del Ensemble D38.
-- `05 modelado v8.ipynb` — experimento de threshold tuning (D35/D36). Outcome: `ensemble_v8_threshold` rechazado (§7).
-- `05 modelado v9.ipynb` — candidato congelado. Outcome: Ensemble D38 (RF v5.1×0.80 + LGB v7×0.20), QWK=0.6529, RecAlta=0.6509 en validación (LOG-25).
-- `05 modelado rf_retrain v1.ipynb` — sanity check de reproducibilidad del RF v5.1 (D41-5a→5c). Outcome: modelo re-entrenado bit-a-bit idéntico al original, max diff=0.000000 (`DECISION_LOG.md`).
-- `05 modelado v10.ipynb` (P0) — ventana completa de 162 días. Outcome: Ensemble RF×0.85+LGB×0.15 QWK=0.6227, RecAlta=0.5237 — sin candidato, hipótesis de concept drift (§14).
-- `05 modelado v11.ipynb` (P1) — ventana de 83 días, replica el setup de v9. Outcome: QWK=0.6231, RecAlta=0.5254 — sin candidato; refuta la hipótesis de concept drift (Δ=+0.0004 vs v10) (§15).
-- `05 modelado v12.ipynb` (P2) — XGBoost sobre FE v6. Outcome: XGBoost solo QWK=0.3684; Ensemble XGB×0.5+RF×0.5 QWK=0.5410 — sin candidato, XGBoost sesgado hacia la clase Alta (§16).
-- `05 modelado v13.ipynb` (T1+T2) — escaneo de 46 umbrales + LightGBM v13. Outcome: máximo QWK=0.6231 con RecAlta≥0.55 — sin candidato; búsqueda OE2 declarada cerrada sobre FE v6 (§17).
-- `05 modelado v14.ipynb` (R5+R1) — threshold scan sobre probabilidades de v9 (val) + LGB con SMOTE. Outcome: T=0.38 → QWK=0.6504, RecAlta=0.6697 — candidato provisional (§18–§19).
-- `05 modelado v15.ipynb` (R2+R3) — corrección de label shift (BBSE) + LGB warm-start. Outcome: R2 BBSE colapsa (QWK=0.0000), R3 warmstart QWK=0.5827 (ΔQWK=−0.0119) — sin candidato nuevo; se confirma como candidato definitivo el Ensemble D38 argmax de v9 (QWK=0.6529, RecAlta=0.6509); búsqueda OE2 cerrada (§20).
-
-**Etapa 6 · Evaluación en test** (`TEST_SET_EVALUATION.md`):
-- `06 evaluacion test set v6.ipynb` — confirmación one-shot (idéntica a v5) + guardado de artefactos para exportación ONNX. Outcome: `X_test_rf_v7.npy`, `X_test_lgb_v7.npy`, `y_test.npy` (§29).
-- `06 evaluacion test set v7.ipynb` — ONE-SHOT DEFINITIVO sobre el hold-out completo (8–30 sep 2026). Outcome: QWK=0.6786, RecAlta=0.4966 — H2 verificada, dimensión científica comparativa (§30).
-
-**Etapa 7 · Ablación BGP** — `07 ablacion_bgp v2.ipynb`: re-confirmación de H1 con el dataset extendido de 162 días. Outcome: RF ΔQWK=−0.0000, LGB ΔQWK=−0.0113 — H1 re-confirmada (`ABLATION_BGP_ANALYSIS.md §16`).
-
-**Etapa 8 · Exportación ONNX** — `08 onnx_export v1.ipynb`: exporta el componente LightGBM del ensemble a ONNX. Outcome: `lgb_v7.onnx` (opset 9), epsilon máximo 8.49e-08 frente al modelo original, QWK D40=0.6786 confirmado post-exportación (`MLOPS_PIPELINE.md §7`).
-
-**Etapa 9 · Inferencia DSDL** — `09 dsdl_inference v1.ipynb`: aplica el Ensemble D38 vía el pipeline DSDL. Outcome: smoke test QWK=0.6786, SLA<100ms, 1,138,360 ventanas inferidas, `predictions_d38.parquet` (`MLOPS_PIPELINE.md §7.3`).
-
-**Etapa 10 · Dashboard y MTTD** — `10 splunk_dashboard v1.ipynb`: genera alertas y mide el MTTD. Outcome: MTTD_ML=8.7 min vs. baseline=30.0 min (−71%), Wilcoxon p=1.37×10⁻¹⁴⁸ — H3 verificada (`MLOPS_PIPELINE.md`).
-
-**Etapa 11 · DSDL Live Apply** — `11 splunk_dsdl_apply v1.ipynb`: prototipo de scoring en vivo contra Splunk. Outcome: 7 artefactos D40 verificados SHA-256, latencia 63.4 ms/ventana (batch=1), SLA<100ms en todos los batches (`DSDL_APPLY_PROTOTYPE.md`).
+| Notebook | Etapa | Descripción | Outcome |
+|---|---|---|---|
+| `00 search load 01.ipynb` / `00 search load 52.ipynb` | 0 · Ingesta | 2 de 52 notebooks de ingesta incluidos como muestra representativa (primero y último, mismo patrón repetido por semana/proveedor contra el índice `thousandeyes` de Splunk) | 72 parquets crudos, 525,019,966 filas |
+| `01 dataset analisis v10.ipynb` | 1 · EDA | Consolida los 72 parquets y ejecuta el análisis exploratorio final | `te_all_raw_v4.parquet` — 525M filas, 162 días, 621 rutas, ratio BGP 1:45 |
+| `02 calibracion v7.ipynb` | 2 · Calibración | Barrido y validación de umbrales de severidad sobre las 1,035 rutas completas | Parámetros congelados BD=7, k=(1.0,2.0,3.5), OR≥4/6 — no se re-ejecuta |
+| `03 etiquetado v3.ipynb` | 3 · Etiquetado | Primera ejecución, dataset de 83 días (may–jul 2026), mismos parámetros que v4 pero incompleto | Histórico, superado por v4 |
+| `03 etiquetado v4.ipynb` | 3 · Etiquetado | Versión final sobre los 162 días completos | 7,628,801 ventanas etiquetadas, 1,035 rutas, splits 70/15/15, cobertura test 99.6% |
+| `04 feature_engineering v4.ipynb` | 4 · Features | Primera iteración, 83 días | 119→113 features tras corrección D12-REV; superada por v5/v6 |
+| `04 feature_engineering v5.ipynb` | 4 · Features | Segunda iteración, 83 días | 100 features, arquitectura de referencia (la misma que v6) |
+| `04 feature_engineering v6.ipynb` | 4 · Features | Versión final, 162 días completos | `te_features_v6.parquet` — 100 features ML, 7,628,801 ventanas, train=5,349,594/val=1,140,847/test=1,138,360 |
+| `05 modelado v4.ipynb` | 5 · Modelado | Primera campaña (RF, XGBoost, GRU) sobre FE v4 | RF v4 Full QWK=0.6257, XGBoost v4 QWK=0.6142, GRU QWK=0.4996 (colapso clase Alta) — ninguno alcanza floor QWK≥0.65 |
+| `05 modelado v5.ipynb` | 5 · Modelado | Incorpora LightGBM y el primer ensemble (D27), sobre FE v5 | Primer ensemble multi-modelo, base para iteraciones siguientes |
+| `05 modelado v7.ipynb` | 5 · Modelado | LightGBM v7, versión final del componente LGB | Modelo candidato del Ensemble D38 |
+| `05 modelado v8.ipynb` | 5 · Modelado | Experimento de threshold tuning (D35/D36) | `ensemble_v8_threshold` rechazado |
+| `05 modelado v9.ipynb` | 5 · Modelado | Candidato congelado | Ensemble D38 (RF v5.1×0.80 + LGB v7×0.20), QWK=0.6529, RecAlta=0.6509 en validación (LOG-25) |
+| `05 modelado rf_retrain v1.ipynb` | 5 · Modelado | Sanity check de reproducibilidad del RF v5.1 (D41-5a→5c) | Modelo re-entrenado bit-a-bit idéntico al original, max diff=0.000000 |
+| `05 modelado v10.ipynb` | 5 · Modelado (OE2) | P0: ventana completa de 162 días | Ensemble RF×0.85+LGB×0.15 QWK=0.6227, RecAlta=0.5237 — sin candidato |
+| `05 modelado v11.ipynb` | 5 · Modelado (OE2) | P1: ventana de 83 días, replica el setup de v9 | QWK=0.6231, RecAlta=0.5254 — sin candidato; refuta concept drift (Δ=+0.0004 vs v10) |
+| `05 modelado v12.ipynb` | 5 · Modelado (OE2) | P2: XGBoost sobre FE v6 | XGBoost solo QWK=0.3684; Ensemble XGB×0.5+RF×0.5 QWK=0.5410 — sin candidato |
+| `05 modelado v13.ipynb` | 5 · Modelado (OE2) | T1+T2: escaneo de 46 umbrales + LightGBM v13 | Máximo QWK=0.6231 con RecAlta≥0.55 — sin candidato; búsqueda OE2 cerrada sobre FE v6 |
+| `05 modelado v14.ipynb` | 5 · Modelado (OE2) | R5+R1: threshold scan sobre probas de v9 (val) + LGB con SMOTE | T=0.38 → QWK=0.6504, RecAlta=0.6697 — candidato provisional |
+| `05 modelado v15.ipynb` | 5 · Modelado (OE2) | R2+R3: corrección de label shift (BBSE) + LGB warm-start | R2 colapsa (QWK=0.0000), R3 QWK=0.5827 (ΔQWK=−0.0119) — sin candidato nuevo; candidato definitivo: Ensemble D38 argmax de v9 (QWK=0.6529, RecAlta=0.6509); OE2 cerrada |
+| `06 evaluacion test set v6.ipynb` | 6 · Evaluación | Confirmación one-shot (idéntica a v5) + guardado de artefactos para ONNX | `X_test_rf_v7.npy`, `X_test_lgb_v7.npy`, `y_test.npy` |
+| `06 evaluacion test set v7.ipynb` | 6 · Evaluación | ONE-SHOT DEFINITIVO sobre el hold-out completo (8–30 sep 2026) | QWK=0.6786, RecAlta=0.4966 — H2 verificada |
+| `07 ablacion_bgp v2.ipynb` | 7 · Ablación BGP | Re-confirmación de H1 con el dataset extendido de 162 días | RF ΔQWK=−0.0000, LGB ΔQWK=−0.0113 — H1 re-confirmada |
+| `08 onnx_export v1.ipynb` | 8 · Export ONNX | Exporta el componente LightGBM del ensemble a ONNX | `lgb_v7.onnx` (opset 9), epsilon máx. 8.49e-08, QWK D40=0.6786 confirmado |
+| `09 dsdl_inference v1.ipynb` | 9 · Inferencia DSDL | Aplica el Ensemble D38 vía el pipeline DSDL | Smoke test QWK=0.6786, SLA<100ms, 1,138,360 ventanas, `predictions_d38.parquet` |
+| `10 splunk_dashboard v1.ipynb` | 10 · Dashboard + MTTD | Genera alertas y mide el MTTD | MTTD_ML=8.7 min vs. baseline=30.0 min (−71%), Wilcoxon p=1.37×10⁻¹⁴⁸ — H3 verificada |
+| `11 splunk_dsdl_apply v1.ipynb` | 11 · DSDL Live Apply | Prototipo de scoring en vivo contra Splunk | 7 artefactos D40 SHA-256, latencia 63.4 ms/ventana (batch=1), SLA<100ms |
