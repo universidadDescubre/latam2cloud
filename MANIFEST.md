@@ -51,7 +51,7 @@ Depósito Zenodo `10.5281/zenodo.23455882` (CC-BY-4.0). Checksums listados son *
 |---|---|---:|---|---|
 | `h3_verdict_d38.json` | Veredicto H3 (MTTD, Wilcoxon) | 537 B | `c692deb93d59feb2eb92ab9429e463b1` | `10 splunk_dashboard v1.ipynb` |
 | `latency_report_d38.json` | Reporte de latencia/SLA | 1,118 B | `dce75de9aee50fcb0292f76c4b5d00d1` | `11 splunk_dsdl_apply v1.ipynb` |
-| `dashboard_d38.png` | Captura del dashboard con veredicto H3 | 108,078 B (106 KB) | `c80f154066ef23662b34d72d71b46833` | `10 splunk_dashboard v1.ipynb` |
+| `dashboard_d38.png` | Gráfico Matplotlib (3 paneles): distribución diaria de clases predichas, predicho vs. real, historial de alertas — no es captura del dashboard Splunk (XML) | 108,078 B (106 KB) | `c80f154066ef23662b34d72d71b46833` | `10 splunk_dashboard v1.ipynb` |
 
 ## Código
 
