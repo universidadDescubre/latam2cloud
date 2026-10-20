@@ -68,13 +68,13 @@ Depósito Zenodo `10.5281/zenodo.23455882` (CC-BY-4.0). Ningún archivo se zipea
 
 | Notebook | Descripción | Resultado | Descripción del resultado |
 |---|---|---|---|
-| `08 onnx_export v1.ipynb` | Exporta el componente LightGBM del ensamble a un formato portable para producción | `lgb_v7.onnx`, `ensemble_d38_manifest.json` | Exportación verificada, sin pérdida de desempeño respecto al modelo original |
+| `08 onnx_export v1.ipynb` | Exporta el componente LightGBM del ensamble a un formato portable para producción | `lgb_v7.onnx`, `ensemble_d38_manifest.json`, `ensemble_d38_infer.py` | Exportación verificada, sin pérdida de desempeño respecto al modelo original; el script implementa la función de inferencia híbrida del ensamble (Random Forest × 0.80 + LightGBM × 0.20) |
 
 ## Etapa 9 — Inferencia
 
 | Notebook | Descripción | Resultado | Descripción del resultado |
 |---|---|---|---|
-| `09 dsdl_inference v1.ipynb` | Aplica el ensamble sobre el conjunto de prueba completo a través de la plataforma de inferencia | `predictions_d38.parquet` | Desempeño confirmado, tiempo de respuesta dentro del límite de servicio acordado |
+| `09 dsdl_inference v1.ipynb` | Aplica el ensamble sobre el conjunto de prueba completo a través de la plataforma de inferencia | `predictions_d38.parquet`, `dsdl_apply_d38.py` | Desempeño confirmado, tiempo de respuesta dentro del límite de servicio acordado; el script implementa la función `apply()` usada por el wrapper de scoring en producción |
 
 ## Etapa 10 — Monitoreo
 
